@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     Item[]   // items owned by this user
+  loans     Loan[]   // loans where this user is the borrower
+}
+
+model Item {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  available   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  loans       Loan[]
+}
+
+model Loan {
+  id         String    @id @default(cuid())
+  startDate  DateTime  @default(now())
+  endDate    DateTime?
+  returnedAt DateTime?
+  status     LoanStatus @default(PENDING)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  itemId     String
+  item       Item      @relation(fields: [itemId], references: [id])
+  borrowerId String
+  borrower   User      @relation(fields: [borrowerId], references: [id])
+}
+
+enum LoanStatus {
+  PENDING
+  ACTIVE
+  RETURNED
+  CANCELLED
+}
